@@ -6,7 +6,7 @@ export interface MatomoInstance {
     trackSiteSearch: MatomoTracker['trackSiteSearch'];
     trackLink: MatomoTracker['trackLink'];
     pushInstruction: MatomoTracker['pushInstruction'];
-    setDisabled: MatomoTracker['setDisabled'];
+    enableTracking: MatomoTracker['enableTracking'];
 }
 export declare type InstanceParams = types.UserOptions;
 export declare type TrackPageViewParams = types.TrackPageViewParams;

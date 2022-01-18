@@ -34,21 +34,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var constants_1 = require("./constants");
 var MatomoTracker = /** @class */ (function () {
     function MatomoTracker(userOptions) {
-        this.disabled = false;
         if (!userOptions.urlBase) {
             throw new Error('Matomo urlBase is required.');
         }
         if (!userOptions.siteId) {
             throw new Error('Matomo siteId is required.');
         }
-        this.initialize(userOptions);
-    }
-    MatomoTracker.prototype.initialize = function (_a) {
-        var _this = this;
-        var _b;
-        var urlBase = _a.urlBase, siteId = _a.siteId, userId = _a.userId, trackerUrl = _a.trackerUrl, srcUrl = _a.srcUrl, disabled = _a.disabled, heartBeat = _a.heartBeat, _c = _a.linkTracking, linkTracking = _c === void 0 ? true : _c, _d = _a.configurations, configurations = _d === void 0 ? {} : _d;
-        this.disabled = !!disabled;
-        var normalizedUrlBase = urlBase[urlBase.length - 1] !== '/' ? "".concat(urlBase, "/") : urlBase;
+        this.userOptions = userOptions;
         if (typeof window === 'undefined') {
             return;
         }
@@ -56,42 +48,11 @@ var MatomoTracker = /** @class */ (function () {
         if (window._paq.length !== 0) {
             return;
         }
-        if (disabled) {
+        if (userOptions.disabled) {
             return;
         }
-        this.pushInstruction('setTrackerUrl', trackerUrl !== null && trackerUrl !== void 0 ? trackerUrl : "".concat(normalizedUrlBase, "matomo.php"));
-        this.pushInstruction('setSiteId', siteId);
-        if (userId) {
-            this.pushInstruction('setUserId', userId);
-        }
-        Object.entries(configurations).forEach(function (_a) {
-            var name = _a[0], instructions = _a[1];
-            if (instructions instanceof Array) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                _this.pushInstruction.apply(_this, __spreadArray([name], instructions, false));
-            }
-            else {
-                _this.pushInstruction(name, instructions);
-            }
-        });
-        // accurately measure the time spent on the last pageview of a visit
-        if (!heartBeat || (heartBeat && heartBeat.active)) {
-            this.enableHeartBeatTimer((_b = (heartBeat && heartBeat.seconds)) !== null && _b !== void 0 ? _b : 15);
-        }
-        // // measure outbound links and downloads
-        // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
-        this.enableLinkTracking(linkTracking);
-        var doc = document;
-        var scriptElement = doc.createElement('script');
-        var scripts = doc.getElementsByTagName('script')[0];
-        scriptElement.type = 'text/javascript';
-        scriptElement.async = true;
-        scriptElement.defer = true;
-        scriptElement.src = srcUrl || "".concat(normalizedUrlBase, "matomo.js");
-        if (scripts && scripts.parentNode) {
-            scripts.parentNode.insertBefore(scriptElement, scripts);
-        }
-    };
+        this.enableTracking();
+    }
     MatomoTracker.prototype.enableHeartBeatTimer = function (seconds) {
         this.pushInstruction('enableHeartBeatTimer', seconds);
     };
@@ -277,17 +238,49 @@ var MatomoTracker = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        if (this.disabled) {
-            return this;
-        }
         if (typeof window !== 'undefined') {
             // eslint-disable-next-line
             window._paq.push(__spreadArray([name], args, true));
         }
         return this;
     };
-    MatomoTracker.prototype.setDisabled = function (disabled) {
-        this.disabled = disabled;
+    MatomoTracker.prototype.enableTracking = function () {
+        var _this = this;
+        var _a;
+        var _b = this.userOptions, urlBase = _b.urlBase, siteId = _b.siteId, userId = _b.userId, trackerUrl = _b.trackerUrl, srcUrl = _b.srcUrl, heartBeat = _b.heartBeat, _c = _b.linkTracking, linkTracking = _c === void 0 ? true : _c, _d = _b.configurations, configurations = _d === void 0 ? {} : _d;
+        var normalizedUrlBase = urlBase[urlBase.length - 1] !== '/' ? "".concat(urlBase, "/") : urlBase;
+        this.pushInstruction('setTrackerUrl', trackerUrl !== null && trackerUrl !== void 0 ? trackerUrl : "".concat(normalizedUrlBase, "matomo.php"));
+        this.pushInstruction('setSiteId', siteId);
+        if (userId) {
+            this.pushInstruction('setUserId', userId);
+        }
+        Object.entries(configurations).forEach(function (_a) {
+            var name = _a[0], instructions = _a[1];
+            if (instructions instanceof Array) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                _this.pushInstruction.apply(_this, __spreadArray([name], instructions, false));
+            }
+            else {
+                _this.pushInstruction(name, instructions);
+            }
+        });
+        // accurately measure the time spent on the last pageview of a visit
+        if (!heartBeat || (heartBeat && heartBeat.active)) {
+            this.enableHeartBeatTimer((_a = (heartBeat && heartBeat.seconds)) !== null && _a !== void 0 ? _a : 15);
+        }
+        // // measure outbound links and downloads
+        // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
+        this.enableLinkTracking(linkTracking);
+        var doc = document;
+        var scriptElement = doc.createElement('script');
+        var scripts = doc.getElementsByTagName('script')[0];
+        scriptElement.type = 'text/javascript';
+        scriptElement.async = true;
+        scriptElement.defer = true;
+        scriptElement.src = srcUrl || "".concat(normalizedUrlBase, "matomo.js");
+        if (scripts && scripts.parentNode) {
+            scripts.parentNode.insertBefore(scriptElement, scripts);
+        }
         return this;
     };
     return MatomoTracker;
