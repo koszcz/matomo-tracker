@@ -16,6 +16,8 @@ import {
 class MatomoTracker {
   mutationObserver?: MutationObserver
 
+  disabled = false
+
   constructor(userOptions: UserOptions) {
     if (!userOptions.urlBase) {
       throw new Error('Matomo urlBase is required.')
@@ -38,6 +40,8 @@ class MatomoTracker {
     linkTracking = true,
     configurations = {},
   }: UserOptions) {
+    this.disabled = !!disabled
+
     const normalizedUrlBase =
       urlBase[urlBase.length - 1] !== '/' ? `${urlBase}/` : urlBase
 
@@ -351,11 +355,20 @@ class MatomoTracker {
    * @param args The arguments to pass along with the instruction.
    */
   pushInstruction(name: string, ...args: any[]): MatomoTracker {
+    if (this.disabled) {
+      return this
+    }
+
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line
       window._paq.push([name, ...args])
     }
 
+    return this
+  }
+
+  setDisabled(disabled: boolean): MatomoTracker {
+    this.disabled = disabled
     return this
   }
 }
