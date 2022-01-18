@@ -16,7 +16,7 @@ import {
 class MatomoTracker {
   mutationObserver?: MutationObserver
 
-  disabled = false
+  userOptions: UserOptions
 
   constructor(userOptions: UserOptions) {
     if (!userOptions.urlBase) {
@@ -26,24 +26,7 @@ class MatomoTracker {
       throw new Error('Matomo siteId is required.')
     }
 
-    this.initialize(userOptions)
-  }
-
-  private initialize({
-    urlBase,
-    siteId,
-    userId,
-    trackerUrl,
-    srcUrl,
-    disabled,
-    heartBeat,
-    linkTracking = true,
-    configurations = {},
-  }: UserOptions) {
-    this.disabled = !!disabled
-
-    const normalizedUrlBase =
-      urlBase[urlBase.length - 1] !== '/' ? `${urlBase}/` : urlBase
+    this.userOptions = userOptions
 
     if (typeof window === 'undefined') {
       return
@@ -55,51 +38,11 @@ class MatomoTracker {
       return
     }
 
-    if (disabled) {
+    if (userOptions.disabled) {
       return
     }
 
-    this.pushInstruction(
-      'setTrackerUrl',
-      trackerUrl ?? `${normalizedUrlBase}matomo.php`,
-    )
-
-    this.pushInstruction('setSiteId', siteId)
-
-    if (userId) {
-      this.pushInstruction('setUserId', userId)
-    }
-
-    Object.entries(configurations).forEach(([name, instructions]) => {
-      if (instructions instanceof Array) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        this.pushInstruction(name, ...instructions)
-      } else {
-        this.pushInstruction(name, instructions)
-      }
-    })
-
-    // accurately measure the time spent on the last pageview of a visit
-    if (!heartBeat || (heartBeat && heartBeat.active)) {
-      this.enableHeartBeatTimer((heartBeat && heartBeat.seconds) ?? 15)
-    }
-
-    // // measure outbound links and downloads
-    // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
-    this.enableLinkTracking(linkTracking)
-
-    const doc = document
-    const scriptElement = doc.createElement('script')
-    const scripts = doc.getElementsByTagName('script')[0]
-
-    scriptElement.type = 'text/javascript'
-    scriptElement.async = true
-    scriptElement.defer = true
-    scriptElement.src = srcUrl || `${normalizedUrlBase}matomo.js`
-
-    if (scripts && scripts.parentNode) {
-      scripts.parentNode.insertBefore(scriptElement, scripts)
-    }
+    this.enableTracking()
   }
 
   enableHeartBeatTimer(seconds: number): void {
@@ -355,10 +298,6 @@ class MatomoTracker {
    * @param args The arguments to pass along with the instruction.
    */
   pushInstruction(name: string, ...args: any[]): MatomoTracker {
-    if (this.disabled) {
-      return this
-    }
-
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line
       window._paq.push([name, ...args])
@@ -367,8 +306,63 @@ class MatomoTracker {
     return this
   }
 
-  setDisabled(disabled: boolean): MatomoTracker {
-    this.disabled = disabled
+  enableTracking(): MatomoTracker {
+    const {
+      urlBase,
+      siteId,
+      userId,
+      trackerUrl,
+      srcUrl,
+      heartBeat,
+      linkTracking = true,
+      configurations = {},
+    } = this.userOptions
+
+    const normalizedUrlBase =
+      urlBase[urlBase.length - 1] !== '/' ? `${urlBase}/` : urlBase
+
+    this.pushInstruction(
+      'setTrackerUrl',
+      trackerUrl ?? `${normalizedUrlBase}matomo.php`,
+    )
+
+    this.pushInstruction('setSiteId', siteId)
+
+    if (userId) {
+      this.pushInstruction('setUserId', userId)
+    }
+
+    Object.entries(configurations).forEach(([name, instructions]) => {
+      if (instructions instanceof Array) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        this.pushInstruction(name, ...instructions)
+      } else {
+        this.pushInstruction(name, instructions)
+      }
+    })
+
+    // accurately measure the time spent on the last pageview of a visit
+    if (!heartBeat || (heartBeat && heartBeat.active)) {
+      this.enableHeartBeatTimer((heartBeat && heartBeat.seconds) ?? 15)
+    }
+
+    // // measure outbound links and downloads
+    // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
+    this.enableLinkTracking(linkTracking)
+
+    const doc = document
+    const scriptElement = doc.createElement('script')
+    const scripts = doc.getElementsByTagName('script')[0]
+
+    scriptElement.type = 'text/javascript'
+    scriptElement.async = true
+    scriptElement.defer = true
+    scriptElement.src = srcUrl || `${normalizedUrlBase}matomo.js`
+
+    if (scripts && scripts.parentNode) {
+      scripts.parentNode.insertBefore(scriptElement, scripts)
+    }
+
     return this
   }
 }

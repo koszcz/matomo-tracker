@@ -47,22 +47,19 @@ function useMatomo() {
     [instance],
   )
 
-  const setDisabled = useCallback(
-    (disabled: boolean) => {
-      instance?.setDisabled(disabled)
-    },
-    [instance],
-  )
+  const enableTracking = useCallback(() => {
+    instance?.enableTracking()
+  }, [instance])
 
   return {
+    enableLinkTracking,
+    enableTracking,
+    pushInstruction,
     trackEvent,
     trackEvents,
+    trackLink,
     trackPageView,
     trackSiteSearch,
-    trackLink,
-    enableLinkTracking,
-    pushInstruction,
-    setDisabled,
   }
 }
 

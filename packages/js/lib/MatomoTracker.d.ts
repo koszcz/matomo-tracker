@@ -39,7 +39,7 @@ declare class MatomoTracker {
      * @param args The arguments to pass along with the instruction.
      */
     pushInstruction(name: string, ...args: any[]): MatomoTracker;
-    setDisabled(disabled: boolean): MatomoTracker;
+    enableTracking(): MatomoTracker;
 }
 export default MatomoTracker;
 //# sourceMappingURL=MatomoTracker.d.ts.map
