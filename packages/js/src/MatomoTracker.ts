@@ -15,6 +15,8 @@ import {
 
 class MatomoTracker {
   mutationObserver?: MutationObserver
+  trackingEnabled: boolean
+  eventsQueue: any[] = []
 
   userOptions: UserOptions
 
@@ -27,6 +29,7 @@ class MatomoTracker {
     }
 
     this.userOptions = userOptions
+    this.trackingEnabled = !userOptions.disabled
 
     if (typeof window === 'undefined') {
       return
@@ -298,6 +301,12 @@ class MatomoTracker {
    * @param args The arguments to pass along with the instruction.
    */
   pushInstruction(name: string, ...args: any[]): MatomoTracker {
+    if (!this.trackingEnabled) {
+      this.eventsQueue.push({ name, args })
+
+      return this;
+    }
+
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line
       window._paq.push([name, ...args])
@@ -320,6 +329,8 @@ class MatomoTracker {
 
     const normalizedUrlBase =
       urlBase[urlBase.length - 1] !== '/' ? `${urlBase}/` : urlBase
+
+    this.trackingEnabled = true
 
     this.pushInstruction(
       'setTrackerUrl',
@@ -349,6 +360,8 @@ class MatomoTracker {
     // // measure outbound links and downloads
     // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
     this.enableLinkTracking(linkTracking)
+
+    this.eventsQueue.forEach((e) => this.pushInstruction(e.name, ...e.args))
 
     const doc = document
     const scriptElement = doc.createElement('script')

@@ -1,6 +1,8 @@
 import { AddEcommerceItemParams, RemoveEcommerceItemParams, SetEcommerceViewParams, TrackEcommerceOrderParams, TrackEventParams, TrackLinkParams, TrackPageViewParams, TrackParams, TrackSiteSearchParams, UserOptions } from './types';
 declare class MatomoTracker {
     mutationObserver?: MutationObserver;
+    trackingEnabled: boolean;
+    eventsQueue: any[];
     userOptions: UserOptions;
     constructor(userOptions: UserOptions);
     enableHeartBeatTimer(seconds: number): void;

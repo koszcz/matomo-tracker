@@ -34,6 +34,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var constants_1 = require("./constants");
 var MatomoTracker = /** @class */ (function () {
     function MatomoTracker(userOptions) {
+        this.eventsQueue = [];
         if (!userOptions.urlBase) {
             throw new Error('Matomo urlBase is required.');
         }
@@ -41,6 +42,7 @@ var MatomoTracker = /** @class */ (function () {
             throw new Error('Matomo siteId is required.');
         }
         this.userOptions = userOptions;
+        this.trackingEnabled = !userOptions.disabled;
         if (typeof window === 'undefined') {
             return;
         }
@@ -238,6 +240,10 @@ var MatomoTracker = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
+        if (!this.trackingEnabled) {
+            this.eventsQueue.push({ name: name, args: args });
+            return this;
+        }
         if (typeof window !== 'undefined') {
             // eslint-disable-next-line
             window._paq.push(__spreadArray([name], args, true));
@@ -249,6 +255,7 @@ var MatomoTracker = /** @class */ (function () {
         var _a;
         var _b = this.userOptions, urlBase = _b.urlBase, siteId = _b.siteId, userId = _b.userId, trackerUrl = _b.trackerUrl, srcUrl = _b.srcUrl, heartBeat = _b.heartBeat, _c = _b.linkTracking, linkTracking = _c === void 0 ? true : _c, _d = _b.configurations, configurations = _d === void 0 ? {} : _d;
         var normalizedUrlBase = urlBase[urlBase.length - 1] !== '/' ? "".concat(urlBase, "/") : urlBase;
+        this.trackingEnabled = true;
         this.pushInstruction('setTrackerUrl', trackerUrl !== null && trackerUrl !== void 0 ? trackerUrl : "".concat(normalizedUrlBase, "matomo.php"));
         this.pushInstruction('setSiteId', siteId);
         if (userId) {
@@ -271,6 +278,7 @@ var MatomoTracker = /** @class */ (function () {
         // // measure outbound links and downloads
         // // might not work accurately on SPAs because new links (dom elements) are created dynamically without a server-side page reload.
         this.enableLinkTracking(linkTracking);
+        this.eventsQueue.forEach(function (e) { return _this.pushInstruction.apply(_this, __spreadArray([e.name], e.args, false)); });
         var doc = document;
         var scriptElement = doc.createElement('script');
         var scripts = doc.getElementsByTagName('script')[0];
